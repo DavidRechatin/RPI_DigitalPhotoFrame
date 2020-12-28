@@ -1,12 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}Digital Photo Frame{% endblock %}
-{% block h1 %}Digital Photo Frame{% endblock %}
+{% block title %}Interface de gestion{% endblock %}
 
 {% block content %}
-<a href="{{ url_for('http_start_slideshow') }}">Démarrer le diaporama</a><br>
-<a href="{{ url_for('http_display_one_photo', filename='p1.jpg') }}">Afficher une photo</a><br>
-<a href="{{ url_for('http_close') }}">Quitter</a><br>
-<a href="{{ url_for('http_restart') }}">Redémarrer le système</a><br>
-<a href="{{ url_for('http_poweroff') }}">Arrêter le système</a><br>
+<a class="btn btn-primary mr-2 mb-2" href="{{ url_for('http_start_slideshow') }}"><i class="bi bi-play-circle-fill"></i> Démarrer le diaporama</a>
+<a class="btn btn-primary mr-2 mb-2" href="{{ url_for('http_stop_slideshow') }}"><i class="bi bi-stop-circle-fill"></i> Arrêter le diaporama</a>
+<a class="btn btn-primary mr-2 mb-2" href="{{ url_for('http_display_one_photo', filename='p1.jpg') }}"><i class="bi bi-image"></i> Afficher une photo</a>
 {% endblock %}
