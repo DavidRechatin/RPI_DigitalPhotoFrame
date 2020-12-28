@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Digital Photo Frame{% endblock %}
+{% block h1 %}Digital Photo Frame{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('http_start_slideshow') }}">Démarrer le diaporama</a><br>
+<a href="{{ url_for('http_display_one_photo', filename='p1.jpg') }}">Afficher une photo</a><br>
+<a href="{{ url_for('http_close') }}">Quitter</a><br>
+<a href="{{ url_for('http_restart') }}">Redémarrer le système</a><br>
+<a href="{{ url_for('http_poweroff') }}">Arrêter le système</a><br>
+{% endblock %}

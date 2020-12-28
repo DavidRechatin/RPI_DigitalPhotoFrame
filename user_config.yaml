@@ -1,0 +1,3 @@
+display_time_in_sec: 2
+random_order: False       # True or False
+debug: True               # True or False
