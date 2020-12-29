@@ -3,6 +3,7 @@
 
 from flask import Flask, render_template
 import os
+import shlex
 from signal import SIGINT
 import subprocess
 
@@ -21,6 +22,25 @@ def kill_fim_and_clear():
     os.system("dd if=/dev/zero of=/dev/fb0 >/dev/null 2>&1")  # clear screen
 
 
+def execute_subprocess(command):
+    if UserConfig.debug:
+        print(command)
+    p = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+
+    try:
+        outs, errs = p.communicate(timeout=UserConfig.display_time_in_sec + 10)
+    except subprocess.TimeoutExpired:
+        if UserConfig.debug:
+            print("subprocess.TimeoutExpired")
+        p.kill()
+        outs, errs = p.communicate()
+
+    if UserConfig.debug:
+        print({"pid": p.pid, "outs": outs, "errs": errs})
+
+    return {"pid": p.pid, "outs": outs, "errs": errs}
+
+
 def display_one_photo(filename: str) -> dict:
     """Display a photo using the framebuffer
     Todo:
@@ -31,25 +51,21 @@ def display_one_photo(filename: str) -> dict:
         dict: {"pid": int, "outs": str, "errs": str}
     """
 
-    # os.system("fbi -T 1 -noverbose -readahead -autozoom /home/pi/photos/" + filename)
     if UserConfig.debug:
         print(f"Display photo : {filename}")
-    command = ["fim", f"{filename}", "--autozoom", "--execute-commands", f"sleep {UserConfig.display_time_in_sec}; quit;"]
+
+    command = f"fim {filename} --autozoom --execute-commands 'sleep {UserConfig.display_time_in_sec}; quit;'"
     if not UserConfig.debug:
         command.append("--quiet")
-    p = subprocess.Popen(command)
-    try:
-        outs, errs = p.communicate(timeout=UserConfig.display_time_in_sec + 10)
-    except subprocess.TimeoutExpired:
-        p.kill()
-        outs, errs = p.communicate()
-    return {"pid": p.pid, "outs": outs, "errs": errs}
+
+    pid, outs, errs = execute_subprocess(command)
+
+    return {"pid": pid, "outs": outs, "errs": errs}
 
 
 def start_slideshow():
     """Start slideshow
     Todo:
-        * Remove 'fbi' command
         * use display_one_photo() in a python loop instead of --slideshow
         * use many folders and subfolders
     """
@@ -57,15 +73,18 @@ def start_slideshow():
     if UserConfig.debug:
         print("Start slideshow...")
     kill_fim_and_clear()
-    # command = "fbi -T 1 -noverbose -readahead -autozoom -timeout 2 " + AppConfig.path_media + "*"
-    command = f"fim {AppConfig.path_media} --autozoom --slideshow {UserConfig.display_time_in_sec} --sort-basename -c 'quit'"
+
+    # try natural sort
+    # command = f"ls {AppConfig.path_media} -1v | fim --read-from-stdin --autozoom --slideshow {UserConfig.display_time_in_sec} -sort-basename --execute-commands 'sleep {UserConfig.display_time_in_sec}; quit;'"
+    command = f"fim {AppConfig.path_media} --autozoom --sort-basename --execute-commands 'while(_fileindex<_filelistlen){{sleep {UserConfig.display_time_in_sec}; next; sleep {UserConfig.display_time_in_sec}; quit;}}'"
     if UserConfig.random_order:
         command += " --random"
     if not UserConfig.debug:
         command += " --quiet"
-    if UserConfig.debug:
-        print(command)
-    subprocess.Popen(command.split())
+
+    pid, outs, errs = execute_subprocess(command)
+
+    return {"pid": pid, "outs": outs, "errs": errs}
 
 
 def stop_slideshow():
