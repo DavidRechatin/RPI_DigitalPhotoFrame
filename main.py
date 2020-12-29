@@ -3,6 +3,7 @@
 
 from flask import Flask, render_template
 import os
+from signal import SIGINT
 import subprocess
 
 from config import AppConfig, UserConfig
@@ -15,7 +16,7 @@ last_update = "27/12/2020"
 def kill_fim_and_clear():
     """Kill all fmi processes"""
     if UserConfig.debug:
-        print("Kill all fim processes...")
+        print("Kill all fim processes and clear screen...")
     os.system("pkill -9 fim")
     os.system("dd if=/dev/zero of=/dev/fb0 >/dev/null 2>&1")  # clear screen
 
@@ -102,8 +103,8 @@ def http_display_one_photo(filename):
 @http_server.route('/close')
 def http_close():
     kill_fim_and_clear()
-    exit()
-    return 'close'
+    # sys.exit() don't kill the main process
+    os.kill(os.getpid(), SIGINT)
 
 
 @http_server.route('/restart')
